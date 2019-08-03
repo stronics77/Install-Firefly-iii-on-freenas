@@ -75,7 +75,7 @@
 
 #install php72 and needed extensions
 
-    pkg install php72 php72-mysqli mod_php72 php72-mbstring php72-zlib php72-curl php72-gd php72-json php72-bcmath php72-intl php72-ldap php72-xml php72-simplexml php72-fileinfo php72-filter php72-hash php72-iconv php72-openssl php72-pdo php72-tokenizer php72-zip php72-pdo_mysql php72-phar php72-pdo_pgsql php72-pgsql php72-pdo_sqlite php72-session
+    pkg install php72 php72-mysqli mod_php72 php72-mbstring php72-zlib php72-curl php72-gd php72-json php72-bcmath php72-intl php72-ldap php72-xml php72-simplexml php72-fileinfo php72-filter php72-hash php72-iconv php72-openssl php72-pdo php72-tokenizer php72-zip php72-pdo_mysql php72-phar php72-pdo_pgsql php72-pgsql php72-pdo_sqlite php72-session php72-ctype
     
     -------TOO MANY???---- got a lot of errors during composer compile which neccesitated all these modules, that and googling some errors.
 
