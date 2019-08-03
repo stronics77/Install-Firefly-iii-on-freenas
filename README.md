@@ -1,5 +1,5 @@
 # Install-Firefly-iii-on-freenas
-#steps taken to install Firefly-iii in Freenas 11.2 jail
+#steps taken to install Firefly-iii in Freenas 11.2 jail ---NOT WORKING---WAS TRYING TO DOCUMENT MY STEPS
 
 #Source: https://www.samueldowling.com/2018/12/08/install-nextcloud-on-freenas-iocage-jail-with-hardened-security/
 #FAMP - Freenas/Apache24/MariaDB setup
@@ -75,7 +75,9 @@
 
 #install php72 and needed extensions
 
-    pkg install php72 php72-mysqli mod_php72 php72-mbstring php72-zlib php72-curl php72-gd php72-json php72-bcmath php72-intl php72-ldap php72-xml php72-simplexml php72-fileinfo php72-filter php72-hash php72-iconv php72-openssl php72-pdo php72-tokenizer php72-zip php72-pdo_mysql php72-phar php72-pdo_pgsql php72-pgsql php72-pdo_sqlite 
+    pkg install php72 php72-mysqli mod_php72 php72-mbstring php72-zlib php72-curl php72-gd php72-json php72-bcmath php72-intl php72-ldap php72-xml php72-simplexml php72-fileinfo php72-filter php72-hash php72-iconv php72-openssl php72-pdo php72-tokenizer php72-zip php72-pdo_mysql php72-phar php72-pdo_pgsql php72-pgsql php72-pdo_sqlite php72-session
+    
+    -------TOO MANY???---- got a lot of errors during composer compile which neccesitated all these modules, that and googling some errors.
 
 #install composer
 
