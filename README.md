@@ -1,150 +1,91 @@
 # Install-Firefly-iii-on-freenas
-#steps taken to install Firefly-iii in Freenas 11.2 jail ---NOT WORKING---WAS TRYING TO DOCUMENT MY STEPS
+#steps taken to install Firefly-iii in Freenas 11.2 jail 
 
-#Source: https://www.samueldowling.com/2018/12/08/install-nextcloud-on-freenas-iocage-jail-with-hardened-security/
-#FAMP - Freenas/Apache24/MariaDB setup
+This works on ubuntu-server18 vm with bhyve:
 
-#Create databases for data and db for firefly
+https://old.reddit.com/r/FireflyIII/comments/8thxuu/fireflyiii_on_ubuntu_server_1604lts_nginx_php72/
 
-#Create mysql user and group
+So... let's try one more time with nginx on FN 11.2
 
-#set permissions for db for mysql
+source: https://www.cyberciti.biz/faq/freebsd-install-nginx-webserver/
 
-#ssh into freenas and create iocage jail
+pkg install nano nginx php72 php72-extensions php72-ldap php72-gd php72-bcmath php72-intl php72-curl php72-mbstring php72-zip php72-openssl php72-zlib php72-fileinfo php72-pdo_mysql mariadb102-server
 
-    sudo iocage create -n firefly-iii -r 11.2-RELEASE ip4_addr="vnet0|INTERNAL IP ADDR/24" defaultrouter="ROUTER IP ADDR" vnet="on" allow_raw_sockets="1" boot="on"
+sysrc *_enable=YES
+- for all services, nginx, mysql-server
 
-#stop jail and add storages - at least db - in gui?
+start services
 
-#create folder in jail if not there
+set up db
 
-#start firefly-iii
+mysql_secure_installation
 
-    sudo iocage start firefly-iii
+        mysql_secure_installation
+        mysql -u root -p 
+        CREATE DATABASE firefly; 
+        GRANT ALL ON firefly.* TO firefly@localhost IDENTIFIED BY 'your_password'; 
+        \q
 
-###DID NOT WORK#optimize metadata? - 
 
-          sudo zfs set primarycache=metadata /mnt/Tank3/firefly-iii/db
 
-          --cannot open '/mnt/Tank3/firefly-iii/db': leading slash in name
+DONT THINK I NEED THIS_ MAYBE TRY WITHOUT
+nano /usr/local/etc/php/99-custom.ini
 
-#go into console for firefly-iii
+display_errors=Off
+safe_mode=Off
+safe_mode_exec_dir=
+safe_mode_allowed_env_vars=PHP_
+expose_php=Off
+log_errors=On
+error_log=/var/log/nginx/php.scripts.log
+register_globals=Off
+cgi.force_redirect=0
+file_uploads=On
+allow_url_fopen=On
+sql.safe_mode=Off
+disable_functions=show_source, system, shell_exec, passthru, proc_nice, exec
+max_execution_time=60
+memory_limit=60M
+upload_max_filesize=2M
+post_max_size=2M
+cgi.fix_pathinfo=0
+sendmail_path=/usr/sbin/sendmail -email -t
 
-    sudo iocage console firefly-iii
+cp -v /usr/local/etc/php.ini-production /usr/local/etc/php.ini
 
-#optional- change to latest releases
 
-#install apache24 and mariadb
+NGINX CONFIG: (put behind a proxy at some point???) - only lan no wan access atm
 
-    pkg install nano apache24 mariadb102-server
-  
-#enable services and start
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    root /firefly-iii/public;
+    index index.php index.html index.htm index.nginx-debian.html;
+    server_name _;
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+        autoindex on;
+        sendfile off;
+    }
+      location ~ \.php$ {
+      include snippets/fastcgi-php.conf;
+      fastcgi_pass unix:/run/php/php7.2-fpm.sock;
+      }
+      location ~ /\.ht {
+      deny all;
+      }
 
-    sysrc apache24_enable=yes
 
-    service apache24 start
+curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-    sysrc mysql_enable=yes
+composer create-project grumpydictator/firefly-iii --no-dev --prefer-dist firefly-iii 4.7.17.3
 
-    service mysql-server start
+chown -R www:www firefly-iii
 
-#check they are running
-  
-    service apache24 status
-   
-    service mysql-server status
-  
-#set up mysql
+php artisan migrate:refresh --seed
 
-    mysql_secure_installation
+php artisan passport:install
 
-####TRIED AFTER INSTALL WITH COMPOSER- FAILS SEE LINE 68 #configure database for firefly-iii?
-
-       mysql -u root -p
-  
-       CREATE DATABASE fireflyiii;
-       CREATE USER 'fireflyiii_admin'@'localhost' IDENTIFIED BY 'YOUR PASSWORD'
-       GRANT ALL ON fireflyiii.* to fireflyiii_admin@localhost;
-    ------NOT WORKING-----can't find any matching row in the user table
-       FLUSH PRIVILEGES;
-       exit
-
-#Source: https://docs.firefly-iii.org/en/latest/installation/server.html
-  #https://kifarunix.com/install-apache-mysql-php-famp-stack-on-freebsd-12/
-#Install PHP and firefly-iii
-
-#install php72 and needed extensions
-
-    pkg install php72 php72-mysqli mod_php72 php72-mbstring php72-zlib php72-curl php72-gd php72-json php72-bcmath php72-intl php72-ldap php72-xml php72-simplexml php72-fileinfo php72-filter php72-hash php72-iconv php72-openssl php72-pdo php72-tokenizer php72-zip php72-pdo_mysql php72-phar php72-pdo_pgsql php72-pgsql php72-pdo_sqlite php72-session php72-ctype
-    
-    -------TOO MANY???---- got a lot of errors during composer compile which neccesitated all these modules, that and googling some errors.
-
-#install composer
-
-    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-  
-#cd to www directory
-
-    cd /usr/local/www
-  
-#install firefly-iii
-
-    composer create-project grumpydictator/firefly-iii --no-dev --prefer-dist firefly-iii 4.7.17.3
-  
-  php artisan complains about something-----
-  
-  > Illuminate\Foundation\ComposerScripts::postAutoloadDump
-  > @php artisan firefly:instructions install
-  Script @php artisan firefly:instructions install handling the post-install-cmd event returned with error code 255
-
-----continue anyways------
-
-#change permissions
-
-          sudo chown -R www-data:www-data firefly-iii - NOT USED_ NO USER www-data
-    chmod -R 775 firefly-iii/storage
-
-#edit .env file?
-
-    cd firefly-iii
-  
-    nano .env
-
-#initialize the database
-
-    php artisan migrate:refresh --seed
-
-    php artisan firefly:upgrade-database
-
-    php artisan firefly:verify
-
-    php artisan passport:install
-
-DONE?
-
-INTERNAL IP ADDR/firefly-iii/
-------NOT FOUND---------
-
-  nano /usr/local/etc/apache24/httpd.conf
-
-  <IfModule dir_module>
-     DirectoryIndex index.php index.html
-  </IfModule>
-  
-#add to end
-
-  <FilesMatch "\.php$">
-    SetHandler application/x-httpd-php
-  </FilesMatch>
-  <FilesMatch "\.phps$"> 
-    SetHandler application/x-httpd-php-source
-  </FilesMatch>
-  
-#restart apache24
-
-Still no worky- goto 63 trying to set up db- fail on that too
-
-Will try ubuntu-server vm and follow this guide:
-https://gist.github.com/philthynz/ec04833a8e39c7f7d1b0d33cb4197a95
+An error occurred. ----RATS----
 
 
