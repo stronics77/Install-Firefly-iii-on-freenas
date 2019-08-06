@@ -74,6 +74,8 @@ server {
       location ~ /\.ht {
       deny all;
       }
+      
+    **does not like the include snippets/fastcgi-php.conf; line- no directory snippets found.- need to look into
 
 
 curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
